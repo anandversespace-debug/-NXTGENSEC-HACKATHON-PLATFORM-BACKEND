@@ -1,62 +1,144 @@
-const { projects } = require('../models/index.js');
+const { Project } = require('../models');
 
 const getAllProjects = async (req, res) => {
   try {
-    res.json(projects);
+    const data = await Project.find({}).populate('created_by', 'name username');
+    res.json(data);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Failed to fetch projects.' });
+  }
+};
+
+const getMyProjects = async (req, res) => {
+  try {
+    const data = await Project.find({ created_by: req.user.id }).populate('created_by', 'name username');
+    res.json(data);
+  } catch (error) {
+    console.error('Fetch My Projects Error:', error);
+    res.status(500).json({ error: 'Failed to fetch your projects.' });
+  }
+};
+
+const getSubmissions = async (req, res) => {
+  try {
+    const query = req.user.role === 'admin' || req.user.role === 'judge' 
+      ? { hackathon_id: { $exists: true } }
+      : { created_by: req.user.id, hackathon_id: { $exists: true } };
+
+    const data = await Project.find(query)
+      .populate('created_by', 'name username')
+      .populate('hackathon_id', 'title');
+
+    res.json(data);
+  } catch (error) {
+    console.error('Fetch Submissions Error:', error);
+    res.status(500).json({ error: 'Failed to fetch submissions.' });
   }
 };
 
 const getProjectById = async (req, res) => {
   try {
-    const project = projects.find(p => p.id === req.params.id);
-    if (!project) return res.status(404).json({ message: 'Project not found' });
-    res.json(project);
+    const data = await Project.findById(req.params.id).populate('created_by', 'name username');
+    if (!data) return res.status(404).json({ message: 'Project not found.' });
+    res.json(data);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Failed to fetch project details.' });
   }
 };
 
 const createProject = async (req, res) => {
   try {
-    const newProject = {
-      id: Date.now().toString(),
+    const newProject = await Project.create({
       ...req.body,
-      created_at: new Date()
-    };
-    projects.push(newProject);
+      created_by: req.user.id
+    });
     res.status(201).json(newProject);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('[DB_ERROR] Project Creation Failure:', error);
+    res.status(500).json({ error: 'Failed to create project.' });
   }
 };
 
 const updateProject = async (req, res) => {
   try {
-    const index = projects.findIndex(p => p.id === req.params.id);
-    if (index === -1) return res.status(404).json({ message: 'Project not found' });
-    
-    projects[index] = { ...projects[index], ...req.body };
-    res.json(projects[index]);
+    const data = await Project.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+    if (!data) return res.status(404).json({ message: 'Project not found.' });
+    res.json(data);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Failed to update project.' });
   }
 };
 
 const deleteProject = async (req, res) => {
   try {
-    projects = projects.filter(p => p.id !== req.params.id);
-    res.json({ message: 'Project deleted successfully' });
+    const data = await Project.findByIdAndDelete(req.params.id);
+    if (!data) return res.status(404).json({ message: 'Project not found.' });
+    res.json({ message: 'Project deleted successfully.' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Failed to delete project.' });
+  }
+};
+
+const toggleStar = async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json({ error: 'Project not found.' });
+
+    const userId = req.user.id;
+    const alreadyStarred = project.starred_by.includes(userId);
+
+    if (alreadyStarred) {
+      project.starred_by.pull(userId);
+      project.stars = Math.max(0, project.stars - 1);
+    } else {
+      project.starred_by.push(userId);
+      project.stars += 1;
+    }
+
+    await project.save();
+    res.json({ stars: project.stars, starred: !alreadyStarred });
+  } catch (error) {
+    console.error('[DB_ERROR] Star Toggle Failure:', error);
+    res.status(500).json({ error: 'Failed to update project star status.' });
+  }
+};
+
+const getFeaturedProjects = async (req, res) => {
+  try {
+    const data = await Project.find({})
+      .sort({ stars: -1, createdAt: -1 })
+      .limit(3)
+      .populate('created_by', 'name username');
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch featured projects.' });
+  }
+};
+
+const getProjectBySlug = async (req, res) => {
+  try {
+    // We'll treat ID as slug for now, or match slug field if it exists
+    const data = await Project.findById(req.params.slug).populate('created_by', 'name username');
+    if (!data) return res.status(404).json({ message: 'Project not found.' });
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch project details.' });
   }
 };
 
 module.exports = {
   getAllProjects,
+  getMyProjects,
+  getSubmissions,
   getProjectById,
   createProject,
   updateProject,
-  deleteProject
+  deleteProject,
+  toggleStar,
+  getFeaturedProjects,
+  getProjectBySlug
 };

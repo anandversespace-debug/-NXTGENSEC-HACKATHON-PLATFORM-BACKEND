@@ -7,6 +7,10 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const connectDB = require('./config/db');
+
+// Connect to MongoDB
+connectDB();
 
 // Rate Limiting
 const limiter = rateLimit({
@@ -15,14 +19,21 @@ const limiter = rateLimit({
   message: { error: 'Too many requests, please try again later.' }
 });
 
+const cookieParser = require('cookie-parser');
 const authMiddleware = require('./middleware/auth');
 
 // Middleware
 app.use(limiter);
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true, // Crucial for reading SSR cookies across ports
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-setup-key']
+}));
 app.use(morgan('dev'));
 app.use(express.json());
+app.use(cookieParser());
 app.use(authMiddleware);
 
 // Import Routes
@@ -31,13 +42,19 @@ const hackathonRoutes = require('./routes/hackathonRoutes');
 const blogRoutes = require('./routes/blogRoutes');
 const userRoutes = require('./routes/userRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
+const authRoutes = require('./routes/authRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const emailRoutes = require('./routes/emailRoutes');
 
 // API Endpoints
+app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/hackathons', hackathonRoutes);
 app.use('/api/blogs', blogRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/uploads', uploadRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/mail', emailRoutes);
 
 // Base Status Route
 app.get('/', (req, res) => {
