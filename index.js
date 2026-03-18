@@ -50,6 +50,7 @@ const uploadRoutes = require('./routes/uploadRoutes');
 const authRoutes = require('./routes/authRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const emailRoutes = require('./routes/emailRoutes');
+const searchRoutes = require('./routes/searchRoutes');
 
 // API Endpoints
 app.use('/api/auth', authRoutes);
@@ -60,6 +61,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/mail', emailRoutes);
+app.use('/api/search', searchRoutes);
 
 // Base Status Route
 app.get('/', (req, res) => {
