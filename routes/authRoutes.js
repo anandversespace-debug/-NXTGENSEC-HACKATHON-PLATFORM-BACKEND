@@ -32,6 +32,7 @@ router.post('/login', async (req, res) => {
       { expiresIn: '30d' }
     );
 
+<<<<<<< HEAD
     const userData = {
       id: user._id,
       email: user.email,
@@ -49,6 +50,8 @@ router.post('/login', async (req, res) => {
       isVerified: user.isVerified
     };
 
+=======
+>>>>>>> de51e741803013f3975de7278cc3ae3928561d57
     res.cookie('nxg_auth', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -57,6 +60,7 @@ router.post('/login', async (req, res) => {
       sameSite: 'lax'
     });
 
+<<<<<<< HEAD
     res.cookie('nxg_user_data', JSON.stringify(userData), {
       httpOnly: false, // Accessible to frontend
       secure: process.env.NODE_ENV === 'production',
@@ -69,6 +73,19 @@ router.post('/login', async (req, res) => {
       success: true,
       token,
       user: userData
+=======
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        username: user.username,
+        role: user.role,
+        onboarded: user.onboarded
+      }
+>>>>>>> de51e741803013f3975de7278cc3ae3928561d57
     });
 
   } catch (error) {
@@ -94,24 +111,38 @@ router.post('/register', async (req, res) => {
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
+<<<<<<< HEAD
     const verificationToken = Math.random().toString(36).substring(2, 12); // Simple token
+=======
+>>>>>>> de51e741803013f3975de7278cc3ae3928561d57
 
     const newUser = await User.create({
       email,
       password: hashedPassword,
       name,
       username,
+<<<<<<< HEAD
       verificationToken,
       role: role || 'developer',
       contributions: 0,
       skills: [],
       onboarded: false,
       isVerified: false
+=======
+      role: role || 'developer',
+      contributions: 0,
+      skills: [],
+      onboarded: false
+>>>>>>> de51e741803013f3975de7278cc3ae3928561d57
     });
 
     const { getVerificationTemplate } = require('../utils/emailTemplates');
     const { sendEmail } = require('../config/nodemailer');
+<<<<<<< HEAD
     const actionLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify?token=${verificationToken}&email=${encodeURIComponent(email)}`;
+=======
+    const actionLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/onboarding?email=${encodeURIComponent(email)}`;
+>>>>>>> de51e741803013f3975de7278cc3ae3928561d57
     
     sendEmail(email, 'Verify Your Account - NxtGenSec', getVerificationTemplate(actionLink, name))
        .catch(err => console.error('[MAIL_ERROR] Verification email failed:', err));
@@ -128,6 +159,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
+<<<<<<< HEAD
 // 2.1 Email Verification
 router.get('/verify', async (req, res) => {
    const { token, email } = req.query;
@@ -167,6 +199,8 @@ router.get('/github', async (req, res) => {
    });
 });
 
+=======
+>>>>>>> de51e741803013f3975de7278cc3ae3928561d57
 // 3. Reset Password
 router.post('/reset-password', async (req, res) => {
   const { email, new_password } = req.body;
@@ -225,6 +259,7 @@ router.post('/setup', async (req, res) => {
       role: 'admin',
       contributions: 1000,
       skills: ['Administrator'],
+<<<<<<< HEAD
       onboarded: true,
       isVerified: true
     });
@@ -245,12 +280,19 @@ router.post('/setup', async (req, res) => {
       maxAge: 30 * 24 * 60 * 60 * 1000,
       path: '/',
       sameSite: 'lax'
+=======
+      onboarded: true
+>>>>>>> de51e741803013f3975de7278cc3ae3928561d57
     });
 
     res.status(201).json({ 
        success: true, 
        message: 'Admin account created successfully.',
+<<<<<<< HEAD
        user: adminData
+=======
+       user: { id: newAdmin._id, email: newAdmin.email, role: newAdmin.role }
+>>>>>>> de51e741803013f3975de7278cc3ae3928561d57
     });
   } catch (error) {
      console.error('[AUTH_ERROR] Setup Failure:', error.message);
@@ -261,7 +303,10 @@ router.post('/setup', async (req, res) => {
 // 5. Logout
 router.get('/logout', (req, res) => {
   res.clearCookie('nxg_auth', { path: '/' });
+<<<<<<< HEAD
   res.clearCookie('nxg_user_data', { path: '/' });
+=======
+>>>>>>> de51e741803013f3975de7278cc3ae3928561d57
   res.status(200).json({ success: true, message: 'Logged out successfully.' });
 });
 

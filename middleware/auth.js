@@ -12,6 +12,7 @@ const authMiddleware = async (req, res, next) => {
     }
 
     // Optional Routes: public endpoints shouldn't block
+<<<<<<< HEAD
     const isPublicGet = (
       req.method === 'GET' && (
         req.path === '/api/projects' ||
@@ -31,6 +32,11 @@ const authMiddleware = async (req, res, next) => {
         ['/api/auth/login', '/api/auth/register', '/api/auth/setup', '/api/mail/contact', '/api/mail/forgot-password', '/api/mail/verify', '/api/auth/reset-password'].includes(req.path)
       )
     );
+=======
+    const publicPaths = ['/api/auth/login', '/api/auth/register', '/api/projects', '/api/projects/featured', '/api/hackathons', '/api/mail/contact'];
+    const isPublicGet = publicPaths.includes(req.path) && req.method === 'GET';
+    const isPublicPost = ['/api/auth/login', '/api/auth/register', '/api/auth/setup', '/api/mail/contact', '/api/mail/forgot-password', '/api/mail/verify', '/api/auth/reset-password'].includes(req.path) && req.method === 'POST';
+>>>>>>> de51e741803013f3975de7278cc3ae3928561d57
 
     if (isPublicGet || isPublicPost) {
       return next();

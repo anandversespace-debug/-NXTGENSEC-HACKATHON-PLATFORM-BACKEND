@@ -14,7 +14,10 @@
   "type": "commonjs",
   "dependencies": {
     "bcryptjs": "^3.0.3",
+<<<<<<< HEAD
     "bullmq": "^5.71.0",
+=======
+>>>>>>> de51e741803013f3975de7278cc3ae3928561d57
     "cloudinary": "^1.41.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
@@ -22,14 +25,21 @@
     "express": "^5.2.1",
     "express-rate-limit": "^8.3.1",
     "helmet": "^8.1.0",
+<<<<<<< HEAD
     "ioredis": "^5.10.1",
+=======
+>>>>>>> de51e741803013f3975de7278cc3ae3928561d57
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.3.1",
     "morgan": "^1.10.1",
     "multer": "^2.1.1",
     "multer-storage-cloudinary": "^4.0.0",
+<<<<<<< HEAD
     "nodemailer": "^8.0.2",
     "socket.io": "^4.8.3"
+=======
+    "nodemailer": "^8.0.2"
+>>>>>>> de51e741803013f3975de7278cc3ae3928561d57
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

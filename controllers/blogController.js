@@ -2,7 +2,11 @@ const { Blog, Comment } = require('../models');
 
 const getAllBlogs = async (req, res) => {
   try {
+<<<<<<< HEAD
     const data = await Blog.find({}).populate('author', 'name username').sort({ createdAt: -1 }).lean();
+=======
+    const data = await Blog.find({}).populate('author', 'name username').sort({ createdAt: -1 });
+>>>>>>> de51e741803013f3975de7278cc3ae3928561d57
     res.json(data);
   } catch (error) {
     res.status(500).json({ error: 'Failed to access blog repository.' });
@@ -11,6 +15,7 @@ const getAllBlogs = async (req, res) => {
 
 const getBlogById = async (req, res) => {
   try {
+<<<<<<< HEAD
     const data = await Blog.findById(req.params.id).populate('author', 'name username').lean();
     if (!data) return res.status(404).json({ message: 'Blog node not found in registry.' });
     
@@ -18,6 +23,15 @@ const getBlogById = async (req, res) => {
     const comments = await Comment.find({ blog_id: req.params.id }).sort({ createdAt: -1 }).lean();
     
     res.json({ ...data, comments });
+=======
+    const data = await Blog.findById(req.params.id).populate('author', 'name username');
+    if (!data) return res.status(404).json({ message: 'Blog node not found in registry.' });
+    
+    // Fetch comments for this blog
+    const comments = await Comment.find({ blog_id: req.params.id }).sort({ createdAt: -1 });
+    
+    res.json({ ...data._doc, comments });
+>>>>>>> de51e741803013f3975de7278cc3ae3928561d57
   } catch (error) {
     res.status(500).json({ error: 'Failed to retrieve blog metadata.' });
   }
@@ -52,6 +66,7 @@ const addComment = async (req, res) => {
 
 const updateBlog = async (req, res) => {
   try {
+<<<<<<< HEAD
     const blog = await Blog.findById(req.params.id);
     if (!blog) return res.status(404).json({ message: 'Blog not found.' });
 
@@ -64,6 +79,11 @@ const updateBlog = async (req, res) => {
     await blog.save();
 
     res.json(blog);
+=======
+    const data = await Blog.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!data) return res.status(404).json({ message: 'Blog not found.' });
+    res.json(data);
+>>>>>>> de51e741803013f3975de7278cc3ae3928561d57
   } catch (error) {
     res.status(500).json({ error: 'Failed to update blog.' });
   }
@@ -71,6 +91,7 @@ const updateBlog = async (req, res) => {
 
 const deleteBlog = async (req, res) => {
   try {
+<<<<<<< HEAD
     const blog = await Blog.findById(req.params.id);
     if (!blog) return res.status(404).json({ message: 'Blog not found.' });
 
@@ -81,6 +102,11 @@ const deleteBlog = async (req, res) => {
 
     await Blog.findByIdAndDelete(req.params.id);
     res.json({ message: 'Blog deleted successfully.' });
+=======
+    const data = await Blog.findByIdAndDelete(req.params.id);
+    if (!data) return res.status(404).json({ message: 'Blog not found.' });
+    res.json({ message: 'Blog deleted.' });
+>>>>>>> de51e741803013f3975de7278cc3ae3928561d57
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete blog.' });
   }

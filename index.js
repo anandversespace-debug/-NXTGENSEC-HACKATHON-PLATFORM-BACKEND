@@ -2,11 +2,16 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const helmet = require('helmet');
+<<<<<<< HEAD
 const { rateLimit } = require('express-rate-limit');
+=======
+const rateLimit = require('express-rate-limit');
+>>>>>>> de51e741803013f3975de7278cc3ae3928561d57
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+<<<<<<< HEAD
 const http = require('http');
 const connectDB = require('./config/db');
 const { initSocket } = require('./config/socket');
@@ -16,6 +21,9 @@ const server = http.createServer(app);
 
 // Initialize Socket.io
 initSocket(server);
+=======
+const connectDB = require('./config/db');
+>>>>>>> de51e741803013f3975de7278cc3ae3928561d57
 
 // Connect to MongoDB
 connectDB();
@@ -32,7 +40,10 @@ const authMiddleware = require('./middleware/auth');
 
 // Middleware
 app.use(limiter);
+<<<<<<< HEAD
 // @ts-ignore
+=======
+>>>>>>> de51e741803013f3975de7278cc3ae3928561d57
 app.use(helmet());
 app.use(cors({
   origin: [
@@ -92,6 +103,7 @@ app.use((err, req, res, next) => {
 });
 
 // Start Server
+<<<<<<< HEAD
 server.listen(PORT, () => {
   console.log(`[SYS] HackathonOS v2.1 Engine active on port ${PORT}`);
   console.log(`[SYS] Real-time protocols synchronized.`);
@@ -99,3 +111,12 @@ server.listen(PORT, () => {
 });
 
 module.exports = server;
+=======
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`[SYS] NxtGenSec API active on port ${PORT}`);
+  });
+}
+
+module.exports = app;
+>>>>>>> de51e741803013f3975de7278cc3ae3928561d57
