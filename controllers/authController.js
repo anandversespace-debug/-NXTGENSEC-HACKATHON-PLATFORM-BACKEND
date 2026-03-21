@@ -42,8 +42,9 @@ const sendTokenResponse = (user, statusCode, res, redirect = false) => {
 
   const cookieOptions = {
     httpOnly: true,
-    secure: isProduction, // Secure only in prod/vercel (requires HTTPS)
-    sameSite: isProduction ? 'none' : 'lax', // 'none' for cross-site prod, 'lax' for local dev
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+    domain: isProduction ? '.anandverse.space' : undefined, // Shared across .anandverse.space
     maxAge: 30 * 24 * 60 * 60 * 1000, 
     path: '/'
   };
@@ -330,6 +331,7 @@ exports.logout = (req, res) => {
     httpOnly: true,
     secure: isProduction,
     sameSite: isProduction ? 'none' : 'lax',
+    domain: isProduction ? '.anandverse.space' : undefined,
     path: '/'
   };
   res.clearCookie('nxg_auth', cookieOptions);
