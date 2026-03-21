@@ -38,11 +38,13 @@ const sendTokenResponse = (user, statusCode, res, redirect = false) => {
     { expiresIn: '30d' }
   );
 
+  const isProduction = process.env.NODE_ENV === 'production' || !!process.env.VERCEL;
+
   const cookieOptions = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    secure: isProduction, // Secure only in prod/vercel (requires HTTPS)
+    sameSite: isProduction ? 'none' : 'lax', // 'none' for cross-site prod, 'lax' for local dev
+    maxAge: 30 * 24 * 60 * 60 * 1000, 
     path: '/'
   };
 
@@ -52,8 +54,7 @@ const sendTokenResponse = (user, statusCode, res, redirect = false) => {
   // 2. Client-side hydration cookie (Not HttpOnly)
   res.cookie('nxg_user_data', JSON.stringify(sanitizeUser(user)), {
     ...cookieOptions,
-    httpOnly: false,
-    maxAge: 30 * 24 * 60 * 60 * 1000
+    httpOnly: false
   });
 
   if (redirect) {
@@ -286,10 +287,11 @@ exports.githubCallback = async (req, res) => {
  * @desc    Logout
  */
 exports.logout = (req, res) => {
+  const isProduction = process.env.NODE_ENV === 'production' || !!process.env.VERCEL;
   const cookieOptions = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
     path: '/'
   };
   res.clearCookie('nxg_auth', cookieOptions);

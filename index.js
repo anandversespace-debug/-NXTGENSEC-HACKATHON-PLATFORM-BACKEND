@@ -45,7 +45,7 @@ app.use(cors({
     'http://localhost:3000',
     'http://localhost:5173',
     process.env.FRONTEND_URL,
-    process.env.VERCEL_URL
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null
   ].filter(Boolean),
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],

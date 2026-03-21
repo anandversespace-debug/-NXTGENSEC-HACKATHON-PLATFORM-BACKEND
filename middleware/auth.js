@@ -11,7 +11,13 @@ const authMiddleware = async (req, res, next) => {
       return next();
     }
 
-    const normalizedPath = req.path.replace(/\/$/, '');
+    const path = req.path || '';
+    const normalizedPath = path.replace(/\/$/, '') || '/';
+    
+    if (process.env.VERCEL) {
+      console.log(`[AUTH-DEBUG] [${req.method}] ${normalizedPath}`);
+      console.log(`[AUTH-DEBUG] Cookies Found: ${Object.keys(req.cookies || {}).join(', ')}`);
+    }
     const isPublicGet = (
       req.method === 'GET' && (
         normalizedPath === '/api/projects' ||
