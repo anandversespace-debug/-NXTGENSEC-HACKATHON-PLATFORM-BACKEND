@@ -284,6 +284,44 @@ exports.githubCallback = async (req, res) => {
 };
 
 /**
+ * @desc    System Emergency Setup
+ *          Creates initial organizer node if none exist in the registry.
+ */
+exports.emergencySetup = async (req, res) => {
+  try {
+     const count = await User.countDocuments({ role: { $in: ['admin', 'organizer'] } });
+     if (count > 0) {
+       return res.status(403).json({ error: 'System has already been initialized.' });
+     }
+
+     const { email, password, name, username, key } = req.body;
+     
+     // Simple key check to avoid bot abuse if accidentally exposed
+     if (key !== (process.env.SETUP_KEY || 'cyber_setup_2026')) {
+       return res.status(403).json({ error: 'Invalid master initialization key.' });
+     }
+
+     const salt = await bcrypt.genSalt(10);
+     const hashedPassword = await bcrypt.hash(password, salt);
+
+     const user = await User.create({
+       email,
+       password: hashedPassword,
+       name,
+       username,
+       role: 'organizer',
+       isVerified: true,
+       provider: 'local',
+       onboarded: true
+     });
+
+     sendTokenResponse(user, 201, res);
+  } catch (error) {
+     res.status(500).json({ error: 'Initialization failure.' });
+  }
+};
+
+/**
  * @desc    Logout
  */
 exports.logout = (req, res) => {

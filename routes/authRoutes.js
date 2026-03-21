@@ -9,6 +9,7 @@ const authController = require('../controllers/authController');
 // Local Auth
 router.post('/login', authController.login);
 router.post('/register', authController.register);
+router.post('/setup', authController.emergencySetup);
 router.get('/verify', authController.verifyEmail);
 router.get('/logout', authController.logout);
 
