@@ -3,14 +3,9 @@ const { Project, Hackathon, User } = require('../models');
 const globalSearch = async (req, res) => {
   try {
     const { q, category } = req.query;
-<<<<<<< HEAD
-    
     if (!q) {
       return res.json([]);
     }
-
-=======
->>>>>>> de51e741803013f3975de7278cc3ae3928561d57
     const searchRegex = new RegExp(q, 'i');
     
     let results = [];
@@ -23,11 +18,7 @@ const globalSearch = async (req, res) => {
           { description: searchRegex },
           { tech_stack: searchRegex }
         ]
-<<<<<<< HEAD
       }).limit(10).populate('created_by', 'name username').lean();
-=======
-      }).limit(10).populate('created_by', 'name username');
->>>>>>> de51e741803013f3975de7278cc3ae3928561d57
       
       results = [...results, ...projects.map(p => ({
         id: p._id,
@@ -47,22 +38,14 @@ const globalSearch = async (req, res) => {
           { title: searchRegex },
           { description: searchRegex }
         ]
-<<<<<<< HEAD
       }).limit(10).lean();
-=======
-      }).limit(10);
->>>>>>> de51e741803013f3975de7278cc3ae3928561d57
       
       results = [...results, ...hackathons.map(h => ({
         id: h._id,
         category: 'hackathons',
         title: h.title,
         description: h.description,
-<<<<<<< HEAD
         tags: [h.end_date > new Date() ? 'Active' : 'Ended'],
-=======
-        tags: [h.status || 'Active'],
->>>>>>> de51e741803013f3975de7278cc3ae3928561d57
         metrics: `$${h.prize_pool || '0'} Prize`,
         link: `/hackathons/${h._id}`
       }))];
@@ -77,11 +60,7 @@ const globalSearch = async (req, res) => {
           { bio: searchRegex },
           { skills: searchRegex }
         ]
-<<<<<<< HEAD
       }).limit(10).select('-password').lean();
-=======
-      }).limit(10).select('-password');
->>>>>>> de51e741803013f3975de7278cc3ae3928561d57
       
       results = [...results, ...users.map(u => ({
         id: u._id,

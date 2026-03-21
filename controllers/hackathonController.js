@@ -2,11 +2,7 @@ const { Hackathon, Registration } = require('../models');
 
 const getAllHackathons = async (req, res) => {
   try {
-<<<<<<< HEAD
     const data = await Hackathon.find({}).sort({ start_date: 1 }).lean();
-=======
-    const data = await Hackathon.find({}).sort({ start_date: 1 });
->>>>>>> de51e741803013f3975de7278cc3ae3928561d57
     res.json(data);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch hackathons.' });
@@ -15,7 +11,6 @@ const getAllHackathons = async (req, res) => {
 
 const getMyHackathons = async (req, res) => {
   try {
-<<<<<<< HEAD
     const registrations = await Registration.find({ user_id: req.user.id }).populate('hackathon_id').lean();
     const hackathons = registrations
       .filter(reg => reg.hackathon_id) // Ensure hackathon still exists
@@ -24,14 +19,6 @@ const getMyHackathons = async (req, res) => {
         team_name: reg.team_name,
         registered_at: reg.registered_at
       }));
-=======
-    const registrations = await Registration.find({ user_id: req.user.id }).populate('hackathon_id');
-    const hackathons = registrations.map(reg => ({
-      ...reg.hackathon_id.toObject(),
-      team_name: reg.team_name,
-      registered_at: reg.registered_at
-    }));
->>>>>>> de51e741803013f3975de7278cc3ae3928561d57
     res.json(hackathons);
   } catch (error) {
     console.error('Fetch My Hackathons Error:', error);

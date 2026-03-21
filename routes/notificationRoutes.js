@@ -1,10 +1,9 @@
 const express = require('express');
 const router = express.Router();
-<<<<<<< HEAD
 const { Notification } = require('../models');
 
 // Get notifications for current user + global broadcasts
-router.get('/', async (/** @type {any} */ req, res) => {
+router.get('/', async (req, res) => {
   try {
     const userId = req.user?.id;
     const data = await Notification.find({ 
@@ -32,7 +31,7 @@ router.post('/read', async (req, res) => {
 });
 
 // Broadcast notification (Admin only)
-router.post('/broadcast', async (/** @type {any} */ req, res) => {
+router.post('/broadcast', async (req, res) => {
    if (req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Root privileges required.' });
    }
@@ -47,15 +46,6 @@ router.post('/broadcast', async (/** @type {any} */ req, res) => {
    } catch (error) {
       res.status(500).json({ error: 'Failed to transmit broadcast.' });
    }
-=======
-
-router.get('/', (req, res) => {
-  res.json({ message: 'Get notifications endpoint placeholder' });
-});
-
-router.post('/read', (req, res) => {
-  res.json({ message: 'Mark notification read placeholder' });
->>>>>>> de51e741803013f3975de7278cc3ae3928561d57
 });
 
 module.exports = router;

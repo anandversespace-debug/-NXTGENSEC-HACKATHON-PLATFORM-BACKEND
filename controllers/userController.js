@@ -4,12 +4,8 @@ const getLeaderboard = async (req, res) => {
   try {
     const data = await User.find({})
       .sort({ contributions: -1 })
-<<<<<<< HEAD
       .select('-password')
       .lean();
-=======
-      .select('-password');
->>>>>>> de51e741803013f3975de7278cc3ae3928561d57
 
     res.json(data);
   } catch (error) {
@@ -25,11 +21,7 @@ const getDashboardStats = async (req, res) => {
     const [projectCount, eventCount, user] = await Promise.all([
       Project.countDocuments({ created_by: req.user.id }),
       Registration.countDocuments({ user_id: req.user.id }),
-<<<<<<< HEAD
       User.findById(req.user.id).select('contributions').lean()
-=======
-      User.findById(req.user.id).select('contributions')
->>>>>>> de51e741803013f3975de7278cc3ae3928561d57
     ]);
 
     res.json({
@@ -46,12 +38,8 @@ const getDashboardStats = async (req, res) => {
 const getProfileByUsername = async (req, res) => {
   try {
     const data = await User.findOne({ username: req.params.username })
-<<<<<<< HEAD
       .select('-password')
       .lean();
-=======
-      .select('-password');
->>>>>>> de51e741803013f3975de7278cc3ae3928561d57
 
     if (!data) return res.status(404).json({ message: 'User not found in registry.' });
     
@@ -64,7 +52,6 @@ const getProfileByUsername = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-<<<<<<< HEAD
      const targetId = req.params.id || req.user.id;
 
      // Authorization: Self or Admin
@@ -77,13 +64,6 @@ const updateProfile = async (req, res) => {
        req.body,
        { new: true }
      ).select('-password').lean();
-=======
-     const data = await User.findByIdAndUpdate(
-       req.params.id || req.user.id,
-       req.body,
-       { new: true }
-     ).select('-password');
->>>>>>> de51e741803013f3975de7278cc3ae3928561d57
 
      if (!data) return res.status(404).json({ error: 'Identity not found.' });
      res.json(data);
@@ -97,12 +77,8 @@ const getUsers = async (req, res) => {
   try {
      const data = await User.find({})
        .sort({ createdAt: -1 })
-<<<<<<< HEAD
        .select('-password')
        .lean();
-=======
-       .select('-password');
->>>>>>> de51e741803013f3975de7278cc3ae3928561d57
 
      res.json(data);
   } catch (error) {
@@ -113,11 +89,7 @@ const getUsers = async (req, res) => {
 
 const getMyProfile = async (req, res) => {
   try {
-<<<<<<< HEAD
     const data = await User.findById(req.user.id).select('-password').lean();
-=======
-    const data = await User.findById(req.user.id).select('-password');
->>>>>>> de51e741803013f3975de7278cc3ae3928561d57
 
     if (!data) return res.status(404).json({ error: 'Identity not found.' });
     res.json(data);
@@ -129,16 +101,12 @@ const getMyProfile = async (req, res) => {
 
 const deleteUser = async (req, res) => {
   try {
-<<<<<<< HEAD
     // Authorization: Admin only for deletion of other users
     if (req.params.id !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Unauthorized to delete this user.' });
     }
 
     const data = await User.findByIdAndDelete(req.params.id || req.user.id);
-=======
-    const data = await User.findByIdAndDelete(req.params.id);
->>>>>>> de51e741803013f3975de7278cc3ae3928561d57
     if (!data) return res.status(404).json({ error: 'Identity not found.' });
     res.json({ message: 'User entity purged from registry.' });
   } catch (error) {
