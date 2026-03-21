@@ -160,20 +160,6 @@ const updateProjectStatus = async (/** @type {any} */ req, res) => {
     if (status === 'verified' && oldStatus !== 'verified') {
        const { User } = require('../models');
        await User.findByIdAndUpdate(project.created_by, { $inc: { contributions: 100 } });
-       
-       // Real-time signal
-       try {
-         const { getIO } = require('../config/socket');
-         const io = getIO();
-         io.to(`user_${project.created_by}`).emit('project_status_change', {
-           projectId: project._id,
-           title: project.title,
-           status: 'verified',
-           pointsReward: 100
-         });
-       } catch (err) {
-         console.warn('[REALTIME_WARN] Failed to transmit project signal:', err.message);
-       }
     }
 
     // Audit Trail Logging

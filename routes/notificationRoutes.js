@@ -53,25 +53,16 @@ router.post('/broadcast', async (/** @type {any} */ req, res) => {
    }
    
    try {
-      const { getIO } = require('../config/socket');
       const { title, message, type } = req.body;
-      
       if (!title || !message) return res.status(400).json({ error: 'Payload requires title and message.' });
 
       const data = await Notification.create({
         title,
         message,
         type: type || 'info',
-        userId: null // Explicitly global
+        userId: null
       });
-      
-      // Emit to all connected clients via real-time protocols
-      try {
-        getIO().emit('new_broadcast', data);
-      } catch (ioError) {
-        console.warn('[REALTIME_WARN] Socket broadcast skipped (system cold):', ioError.message);
-      }
-      
+
       res.status(201).json(data);
    } catch (error) {
       console.error('[NOTIF_ERROR] Broadcast transmit failed:', error);

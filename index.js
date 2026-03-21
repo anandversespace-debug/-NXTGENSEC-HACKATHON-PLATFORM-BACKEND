@@ -8,30 +8,18 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const http = require('http');
 const connectDB = require('./config/db');
 
 // --- Initialization Block ---
 // Vercel Serverless environment optimization:
-// We only initialize Sockets and Queues if not in a serverless environment 
-// or if specifically configured. Some features may be limited in Serverless.
-const server = http.createServer(app);
-
-// Connect DB (Deferred for Serverless startup)
+// We only use standard HTTP responses as WebSockets are not supported in Serverless.
 const dbPromise = connectDB();
-
-// Only init socket if not in standard serverless function (optional check)
-if (process.env.ENABLE_SOCKETS === 'true' || !process.env.VERCEL) {
-  const { initSocket } = require('./config/socket');
-  initSocket(server);
-}
 
 // Rate Limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, 
   max: 100, 
   message: { error: 'Too many requests, please try again later.' },
-  // Disable for Vercel if needed (IPs can overlap)
   skip: (req) => !!process.env.VERCEL
 });
 
@@ -88,9 +76,10 @@ Object.entries(routes).forEach(([name, route]) => {
 app.get('/', (req, res) => {
   res.json({ 
     message: 'NxtGenSec Pro-Active Backend',
-    version: '2.1.0',
+    version: '2.2.0',
     status: 'operational',
     environment: process.env.VERCEL ? 'Vercel Serverless' : 'Production Node',
+    sockets: 'disabled',
     timestamp: new Date()
   });
 });
@@ -105,13 +94,12 @@ app.use((err, req, res, next) => {
 });
 
 // --- Server Lifecycle ---
-// Only listen if not running as a Vercel function
 if (!process.env.VERCEL) {
-  server.listen(PORT, () => {
+  app.listen(PORT, () => {
     console.log(`[SYS] HackathonOS Engine active on port ${PORT}`);
-    console.log(`[SYS] Operating in Persistent Node mode.`);
+    console.log(`[SYS] Operating in API-only mode.`);
   });
 }
 
 // Export for Vercel/Production
-module.exports = server;
+module.exports = app;
