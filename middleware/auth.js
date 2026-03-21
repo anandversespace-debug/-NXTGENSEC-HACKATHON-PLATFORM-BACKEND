@@ -11,28 +11,53 @@ const authMiddleware = async (req, res, next) => {
       return next();
     }
 
-    // Optional Routes: public endpoints shouldn't block
+    const normalizedPath = req.path.replace(/\/$/, '');
     const isPublicGet = (
       req.method === 'GET' && (
-        req.path === '/api/projects' ||
-        req.path === '/api/projects/featured' ||
-        req.path.startsWith('/api/projects/') ||
-        req.path === '/api/hackathons' ||
-        req.path.startsWith('/api/hackathons/') ||
-        req.path === '/api/blogs' ||
-        req.path.startsWith('/api/blogs/') ||
-        req.path === '/api/mail/contact' ||
-        req.path === '/api/search'
+        normalizedPath === '/api/projects' ||
+        normalizedPath === '/api/projects/featured' ||
+        (normalizedPath.startsWith('/api/projects/') && !['/api/projects/my', '/api/projects/submissions'].includes(normalizedPath)) ||
+        normalizedPath === '/api/hackathons' ||
+        (normalizedPath.startsWith('/api/hackathons/') && !['/api/hackathons/my'].includes(normalizedPath)) ||
+        normalizedPath === '/api/blogs' ||
+        normalizedPath.startsWith('/api/blogs/') ||
+        normalizedPath === '/api/mail/contact' ||
+        normalizedPath === '/api/search' ||
+        normalizedPath === '/api/notifications' ||
+        normalizedPath === '/api/users' ||
+        normalizedPath === '/api/users/leaderboard' ||
+        normalizedPath.startsWith('/api/users/profile/') ||
+        normalizedPath === '/api/users/public-stats' ||
+        normalizedPath === '/api/auth/github' ||
+        normalizedPath === '/api/auth/github/callback' ||
+        normalizedPath === '/api/auth/verify'
       )
     );
 
     const isPublicPost = (
       req.method === 'POST' && (
-        ['/api/auth/login', '/api/auth/register', '/api/auth/setup', '/api/mail/contact', '/api/mail/forgot-password', '/api/mail/verify', '/api/auth/reset-password'].includes(req.path)
+        ['/api/auth/login', '/api/auth/register', '/api/auth/setup', '/api/mail/contact', '/api/mail/forgot-password', '/api/mail/verify', '/api/auth/reset-password', '/api/auth/google'].includes(normalizedPath)
       )
     );
 
     if (isPublicGet || isPublicPost) {
+      // For public routes, still try to populate req.user if token exists
+      let token = null;
+      if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+        token = req.headers.authorization.split(' ')[1];
+      } else if (req.cookies && req.cookies.nxg_auth) {
+        token = req.cookies.nxg_auth;
+      }
+
+      if (token) {
+        try {
+          const decoded = jwt.verify(token, JWT_SECRET);
+          req.user = decoded;
+        } catch (err) {
+          // Token invalid but route is public, so we just proceed without user
+          console.warn('[AUTH_WARN] Invalid token on public route:', err.message);
+        }
+      }
       return next();
     }
 
@@ -40,13 +65,19 @@ const authMiddleware = async (req, res, next) => {
     let token = null;
 
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
-      token = req.headers.authorization.split(' ')[1];
-    } else if (req.cookies && req.cookies.nxg_auth) {
+      const headerToken = req.headers.authorization.split(' ')[1];
+      if (headerToken && headerToken !== 'null' && headerToken !== 'undefined') {
+        token = headerToken;
+      }
+    }
+    
+    // Fallback to cookie if no valid header token found
+    if (!token && req.cookies && req.cookies.nxg_auth) {
       token = req.cookies.nxg_auth;
     }
 
     if (!token) {
-       if (req.method === 'GET') return next();
+       console.warn(`[AUTH_MISSING] ${req.method} ${normalizedPath} - No token found.`);
        return res.status(401).json({ error: 'Unauthorized', message: 'No authentication credentials provided.' });
     }
 
@@ -56,6 +87,7 @@ const authMiddleware = async (req, res, next) => {
       req.user = decoded;
       next();
     } catch (err) {
+      console.warn(`[AUTH_INVALID] ${req.method} ${normalizedPath} - Token verification failed:`, err.message);
       return res.status(401).json({ error: 'Unauthorized', message: 'Invalid or expired authentication session.' });
     }
 
@@ -65,4 +97,16 @@ const authMiddleware = async (req, res, next) => {
   }
 };
 
-module.exports = authMiddleware;
+const restrictTo = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({ 
+        error: 'Forbidden', 
+        message: 'Insufficient permissions for this operation.' 
+      });
+    }
+    next();
+  };
+};
+
+module.exports = { authMiddleware, restrictTo };

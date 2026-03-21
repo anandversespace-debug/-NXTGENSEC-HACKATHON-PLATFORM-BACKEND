@@ -22,4 +22,16 @@ const projectSchema = new mongoose.Schema({
   starred_by: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 }, { timestamps: true });
 
+// Text index for search functionality
+projectSchema.index({ 
+  title: 'text', 
+  description: 'text', 
+  tech_stack: 'text' 
+});
+
+projectSchema.index({ status: 1 });
+projectSchema.index({ created_by: 1 });
+projectSchema.index({ hackathon_id: 1 });
+projectSchema.index({ createdAt: -1 });
+
 module.exports = mongoose.model('Project', projectSchema);

@@ -23,6 +23,11 @@ const initSocket = (server) => {
       console.log(`[REALTIME] ${socket.id} joined team cell: ${teamId}`);
     });
 
+    socket.on('join_user', (userId) => {
+      socket.join(`user_${userId}`);
+      console.log(`[REALTIME] ${socket.id} joined personal node: ${userId}`);
+    });
+
     socket.on('disconnect', () => {
       console.log(`[REALTIME] Disconnected: ${socket.id}`);
     });

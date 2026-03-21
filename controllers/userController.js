@@ -17,20 +17,26 @@ const getLeaderboard = async (req, res) => {
 const getDashboardStats = async (/** @type {any} */ req, res) => {
   try {
     const { Project, Registration } = require('../models');
+    // Handle both id and _id from JWT for resilience
+    const userId = req.user.id || req.user._id;
+    
+    if (!userId) {
+       return res.status(401).json({ error: 'System could not verify your identity node.' });
+    }
     
     const [projectCount, eventCount, user] = await Promise.all([
-      Project.countDocuments({ created_by: req.user.id }),
-      Registration.countDocuments({ user_id: req.user.id }),
-      User.findById(req.user.id).select('contributions').lean()
+      Project.countDocuments({ created_by: userId }),
+      Registration.countDocuments({ user_id: userId }),
+      User.findById(userId).select('contributions').lean()
     ]);
 
     res.json({
-      activeProjects: projectCount,
-      eventsJoined: eventCount,
+      activeProjects: projectCount || 0,
+      eventsJoined: eventCount || 0,
       totalPoints: user?.contributions || 0
     });
   } catch (error) {
-    console.error('[DB_ERROR] Failed to fetch dashboard stats:', error);
+    console.error('[DB_ERROR] Telemetry Fetch Failed:', error);
     res.status(500).json({ error: 'System failed to fetch operational telemetry.' });
   }
 };
@@ -117,7 +123,7 @@ const deleteUser = async (/** @type {any} */ req, res) => {
 
 const getAdminStats = async (req, res) => {
   try {
-    const { Project, Hackathon, Registration } = require('../models');
+    const { Project, Hackathon } = require('../models');
     
     const [totalUsers, totalProjects, activeHackathons, pendingSubmissions] = await Promise.all([
       User.countDocuments({}),
@@ -138,13 +144,64 @@ const getAdminStats = async (req, res) => {
   }
 };
 
+const getPublicStats = async (req, res) => {
+  try {
+    const { Project, Hackathon } = require('../models');
+    
+    const [totalUsers, totalProjects, activeHackathons] = await Promise.all([
+      User.countDocuments({}),
+      Project.countDocuments({ status: 'verified' }),
+      Hackathon.countDocuments({ end_date: { $gte: new Date() } })
+    ]);
+
+    res.json({
+      totalUsers,
+      totalProjects,
+      activeHackathons
+    });
+  } catch (error) {
+    console.error('[DB_ERROR] Failed to fetch public stats:', error);
+    res.status(500).json({ error: 'System failed to fetch public telemetry.' });
+  }
+};
+
+const changePassword = async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: 'Current and new passwords are required.' });
+  }
+
+  try {
+    const user = await User.findById(req.user.id).select('+password');
+    if (!user) return res.status(404).json({ error: 'Identity node not found.' });
+
+    if (!user.password) {
+      return res.status(400).json({ error: 'This account uses social authentication. Set a password via recovery if needed.' });
+    }
+
+    const isMatch = await require('bcryptjs').compare(currentPassword, user.password);
+    if (!isMatch) return res.status(401).json({ error: 'Current password verification failed.' });
+
+    const salt = await require('bcryptjs').genSalt(10);
+    user.password = await require('bcryptjs').hash(newPassword, salt);
+    await user.save();
+
+    res.json({ success: true, message: 'Cryptographic credentials rotated.' });
+  } catch (err) {
+    console.error('[AUTH_ERROR] Password Rotate Failure:', err);
+    res.status(500).json({ error: 'System failure during credential rotation.' });
+  }
+};
+
 module.exports = {
   getUsers,
   getMyProfile,
   getLeaderboard,
   getDashboardStats,
   getAdminStats,
+  getPublicStats,
   getProfileByUsername,
   updateProfile,
-  deleteUser
+  deleteUser,
+  changePassword
 };

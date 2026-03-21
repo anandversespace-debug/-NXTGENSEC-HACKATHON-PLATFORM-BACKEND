@@ -3,99 +3,115 @@ const cors = require('cors');
 const morgan = require('morgan');
 const helmet = require('helmet');
 const { rateLimit } = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const http = require('http');
 const connectDB = require('./config/db');
-const { initSocket } = require('./config/socket');
-const { mailQueue, workerQueue } = require('./config/bull');
 
+// --- Initialization Block ---
+// Vercel Serverless environment optimization:
+// We only initialize Sockets and Queues if not in a serverless environment 
+// or if specifically configured. Some features may be limited in Serverless.
 const server = http.createServer(app);
 
-// Initialize Socket.io
-initSocket(server);
+// Connect DB (Deferred for Serverless startup)
+const dbPromise = connectDB();
 
-// Connect to MongoDB
-connectDB();
+// Only init socket if not in standard serverless function (optional check)
+if (process.env.ENABLE_SOCKETS === 'true' || !process.env.VERCEL) {
+  const { initSocket } = require('./config/socket');
+  initSocket(server);
+}
 
 // Rate Limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: { error: 'Too many requests, please try again later.' }
+  windowMs: 15 * 60 * 1000, 
+  max: 100, 
+  message: { error: 'Too many requests, please try again later.' },
+  // Disable for Vercel if needed (IPs can overlap)
+  skip: (req) => !!process.env.VERCEL
 });
 
-const cookieParser = require('cookie-parser');
-const authMiddleware = require('./middleware/auth');
+const { authMiddleware } = require('./middleware/auth');
 
 // Middleware
 app.use(limiter);
-// @ts-ignore
-app.use(helmet());
 app.use(cors({
   origin: [
     'https://vibecodinghackathon.anandverse.space',
     'http://localhost:3000',
     'http://localhost:5173',
-    process.env.FRONTEND_URL
+    process.env.FRONTEND_URL,
+    process.env.VERCEL_URL
   ].filter(Boolean),
-  credentials: true, // Crucial for reading SSR cookies across ports
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-setup-key']
 }));
+
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(cookieParser());
+
+// Re-inject DB connectivity guarantee for every request in serverless
+app.use(async (req, res, next) => {
+  await dbPromise;
+  next();
+});
+
 app.use(authMiddleware);
 
-// Import Routes
-const projectRoutes = require('./routes/projectRoutes');
-const hackathonRoutes = require('./routes/hackathonRoutes');
-const blogRoutes = require('./routes/blogRoutes');
-const userRoutes = require('./routes/userRoutes');
-const uploadRoutes = require('./routes/uploadRoutes');
-const authRoutes = require('./routes/authRoutes');
-const notificationRoutes = require('./routes/notificationRoutes');
-const emailRoutes = require('./routes/emailRoutes');
-const searchRoutes = require('./routes/searchRoutes');
+// --- Routes ---
+const routes = {
+  auth: require('./routes/authRoutes'),
+  projects: require('./routes/projectRoutes'),
+  hackathons: require('./routes/hackathonRoutes'),
+  blogs: require('./routes/blogRoutes'),
+  users: require('./routes/userRoutes'),
+  uploads: require('./routes/uploadRoutes'),
+  notifications: require('./routes/notificationRoutes'),
+  mail: require('./routes/emailRoutes'),
+  search: require('./routes/searchRoutes'),
+  system: require('./routes/systemRoutes'),
+  newsletter: require('./routes/newsletterRoutes'),
+  organizer: require('./routes/organizerRoutes')
+};
 
-// API Endpoints
-app.use('/api/auth', authRoutes);
-app.use('/api/projects', projectRoutes);
-app.use('/api/hackathons', hackathonRoutes);
-app.use('/api/blogs', blogRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/uploads', uploadRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/mail', emailRoutes);
-app.use('/api/search', searchRoutes);
+Object.entries(routes).forEach(([name, route]) => {
+  app.use(`/api/${name}`, route);
+});
 
 // Base Status Route
 app.get('/', (req, res) => {
   res.json({ 
-    message: 'NxtGenSec Development Division API',
-    version: '1.0.0',
+    message: 'NxtGenSec Pro-Active Backend',
+    version: '2.1.0',
     status: 'operational',
+    environment: process.env.VERCEL ? 'Vercel Serverless' : 'Production Node',
     timestamp: new Date()
   });
 });
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error('[ERR]', err.stack);
   res.status(500).json({ 
     error: 'Internal Server Error',
     message: err.message 
   });
 });
 
-// Start Server
-server.listen(PORT, () => {
-  console.log(`[SYS] HackathonOS v2.1 Engine active on port ${PORT}`);
-  console.log(`[SYS] Real-time protocols synchronized.`);
-  console.log(`[SYS] Background worker queues standby.`);
-});
+// --- Server Lifecycle ---
+// Only listen if not running as a Vercel function
+if (!process.env.VERCEL) {
+  server.listen(PORT, () => {
+    console.log(`[SYS] HackathonOS Engine active on port ${PORT}`);
+    console.log(`[SYS] Operating in Persistent Node mode.`);
+  });
+}
 
+// Export for Vercel/Production
 module.exports = server;

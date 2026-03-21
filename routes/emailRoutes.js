@@ -51,11 +51,13 @@ router.post('/contact', async (req, res) => {
   }
 });
 
+const { authMiddleware } = require('../middleware/auth');
+
 // 2. Broadcast Notifications Handler (Admin Only)
-router.post('/broadcast', async (/** @type {any} */ req, res) => {
+router.post('/broadcast', authMiddleware, async (/** @type {any} */ req, res) => {
   try {
     // Check if the user is an admin
-    if (!req.user || req.user.role !== 'admin') {
+    if (req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Forbidden. Admin access required.' });
     }
 
@@ -163,10 +165,10 @@ router.post('/forgot-password', async (req, res) => {
 });
 
 // 5. Admin User Invitation System
-router.post('/invite', async (/** @type {any} */ req, res) => {
+router.post('/invite', authMiddleware, async (/** @type {any} */ req, res) => {
   try {
     // Only allow admins
-    if (!req.user || req.user.role !== 'admin') {
+    if (req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Forbidden. Admin access required.' });
     }
 

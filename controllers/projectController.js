@@ -21,7 +21,7 @@ const getMyProjects = async (/** @type {any} */ req, res) => {
 
 const getSubmissions = async (/** @type {any} */ req, res) => {
   try {
-    const query = req.user.role === 'admin' || req.user.role === 'judge' 
+    const query = req.user.role === 'admin' || req.user.role === 'organizer' 
       ? { hackathon_id: { $exists: true } }
       : { created_by: req.user.id, hackathon_id: { $exists: true } };
 
@@ -134,12 +134,66 @@ const getFeaturedProjects = async (req, res) => {
 
 const getProjectBySlug = async (req, res) => {
   try {
-    // We'll treat ID as slug for now, or match slug field if it exists
     const data = await Project.findById(req.params.slug).populate('created_by', 'name username');
     if (!data) return res.status(404).json({ message: 'Project not found.' });
     res.json(data);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch project details.' });
+  }
+};
+
+const updateProjectStatus = async (/** @type {any} */ req, res) => {
+  try {
+    const { status } = req.body;
+    if (!['pending', 'auditing', 'verified'].includes(status)) {
+       return res.status(400).json({ error: 'Invalid operation status.' });
+    }
+
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json({ error: 'Project node not found.' });
+
+    const oldStatus = project.status;
+    project.status = status;
+    await project.save();
+
+    // Reward logic: +100 Rep points if newly verified
+    if (status === 'verified' && oldStatus !== 'verified') {
+       const { User } = require('../models');
+       await User.findByIdAndUpdate(project.created_by, { $inc: { contributions: 100 } });
+       
+       // Real-time signal
+       try {
+         const { getIO } = require('../config/socket');
+         const io = getIO();
+         io.to(`user_${project.created_by}`).emit('project_status_change', {
+           projectId: project._id,
+           title: project.title,
+           status: 'verified',
+           pointsReward: 100
+         });
+       } catch (err) {
+         console.warn('[REALTIME_WARN] Failed to transmit project signal:', err.message);
+       }
+    }
+
+    // Audit Trail Logging
+    try {
+      const { Log } = require('../models');
+      await Log.create({
+        admin_id: req.user.id,
+        action: `PROJECT_${status.toUpperCase()}`,
+        target_id: project._id,
+        target_type: 'Project',
+        details: { oldStatus, newStatus: status }
+      });
+    } catch (err) {
+      console.warn('[AUDIT_WARN] Failed to record audit log:', err.message);
+    }
+
+    res.json({ message: `Project status rotated to ${status}`, status });
+  } catch (error) {
+    console.error('[DB_ERROR] Status Rotation Failure:', error);
+    res.status(500).json({ error: 'System failed to rotate project status.' });
   }
 };
 
@@ -153,5 +207,6 @@ module.exports = {
   deleteProject,
   toggleStar,
   getFeaturedProjects,
-  getProjectBySlug
+  getProjectBySlug,
+  updateProjectStatus
 };

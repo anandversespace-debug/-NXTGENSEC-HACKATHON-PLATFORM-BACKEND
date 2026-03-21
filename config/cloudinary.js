@@ -10,10 +10,12 @@ cloudinary.config({
 
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: {
-    folder: 'nxtgensec_uploads',
-    allowed_formats: ['jpg', 'png', 'jpeg', 'pdf', 'zip'],
-    resource_type: 'auto',
+  params: async (req, file) => {
+    return {
+      folder: 'nxtgensec_uploads',
+      format: file.mimetype.split('/')[1] === 'pdf' ? 'pdf' : undefined, // Add logic if needed
+      resource_type: 'auto'
+    };
   },
 });
 
