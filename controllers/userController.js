@@ -14,7 +14,7 @@ const getLeaderboard = async (req, res) => {
   }
 };
 
-const getDashboardStats = async (req, res) => {
+const getDashboardStats = async (/** @type {any} */ req, res) => {
   try {
     const { Project, Registration } = require('../models');
     
@@ -50,7 +50,7 @@ const getProfileByUsername = async (req, res) => {
   }
 };
 
-const updateProfile = async (req, res) => {
+const updateProfile = async (/** @type {any} */ req, res) => {
   try {
      const targetId = req.params.id || req.user.id;
 
@@ -87,7 +87,7 @@ const getUsers = async (req, res) => {
   }
 };
 
-const getMyProfile = async (req, res) => {
+const getMyProfile = async (/** @type {any} */ req, res) => {
   try {
     const data = await User.findById(req.user.id).select('-password').lean();
 
@@ -99,7 +99,7 @@ const getMyProfile = async (req, res) => {
   }
 };
 
-const deleteUser = async (req, res) => {
+const deleteUser = async (/** @type {any} */ req, res) => {
   try {
     // Authorization: Admin only for deletion of other users
     if (req.params.id !== req.user.id && req.user.role !== 'admin') {

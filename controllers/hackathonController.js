@@ -9,7 +9,7 @@ const getAllHackathons = async (req, res) => {
   }
 };
 
-const getMyHackathons = async (req, res) => {
+const getMyHackathons = async (/** @type {any} */ req, res) => {
   try {
     const registrations = await Registration.find({ user_id: req.user.id }).populate('hackathon_id').lean();
     const hackathons = registrations
@@ -45,7 +45,7 @@ const createHackathon = async (req, res) => {
   }
 };
 
-const registerForHackathon = async (req, res) => {
+const registerForHackathon = async (/** @type {any} */ req, res) => {
   try {
     const { user_id, hackathon_id, team_name } = req.body;
     const reg = await Registration.create({

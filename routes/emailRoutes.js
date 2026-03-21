@@ -52,7 +52,7 @@ router.post('/contact', async (req, res) => {
 });
 
 // 2. Broadcast Notifications Handler (Admin Only)
-router.post('/broadcast', async (req, res) => {
+router.post('/broadcast', async (/** @type {any} */ req, res) => {
   try {
     // Check if the user is an admin
     if (!req.user || req.user.role !== 'admin') {
@@ -163,7 +163,7 @@ router.post('/forgot-password', async (req, res) => {
 });
 
 // 5. Admin User Invitation System
-router.post('/invite', async (req, res) => {
+router.post('/invite', async (/** @type {any} */ req, res) => {
   try {
     // Only allow admins
     if (!req.user || req.user.role !== 'admin') {

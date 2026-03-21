@@ -23,7 +23,7 @@ const getBlogById = async (req, res) => {
   }
 };
 
-const createBlog = async (req, res) => {
+const createBlog = async (/** @type {any} */ req, res) => {
   try {
     const newBlog = await Blog.create({
       ...req.body,
@@ -50,7 +50,7 @@ const addComment = async (req, res) => {
   }
 };
 
-const updateBlog = async (req, res) => {
+const updateBlog = async (/** @type {any} */ req, res) => {
   try {
     const blog = await Blog.findById(req.params.id);
     if (!blog) return res.status(404).json({ message: 'Blog not found.' });
@@ -69,7 +69,7 @@ const updateBlog = async (req, res) => {
   }
 };
 
-const deleteBlog = async (req, res) => {
+const deleteBlog = async (/** @type {any} */ req, res) => {
   try {
     const blog = await Blog.findById(req.params.id);
     if (!blog) return res.status(404).json({ message: 'Blog not found.' });

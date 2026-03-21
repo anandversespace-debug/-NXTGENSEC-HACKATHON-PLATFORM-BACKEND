@@ -9,7 +9,7 @@ const getAllProjects = async (req, res) => {
   }
 };
 
-const getMyProjects = async (req, res) => {
+const getMyProjects = async (/** @type {any} */ req, res) => {
   try {
     const data = await Project.find({ created_by: req.user.id }).populate('created_by', 'name username').lean();
     res.json(data);
@@ -19,7 +19,7 @@ const getMyProjects = async (req, res) => {
   }
 };
 
-const getSubmissions = async (req, res) => {
+const getSubmissions = async (/** @type {any} */ req, res) => {
   try {
     const query = req.user.role === 'admin' || req.user.role === 'judge' 
       ? { hackathon_id: { $exists: true } }
@@ -47,7 +47,7 @@ const getProjectById = async (req, res) => {
   }
 };
 
-const createProject = async (req, res) => {
+const createProject = async (/** @type {any} */ req, res) => {
   try {
     const newProject = await Project.create({
       ...req.body,
@@ -60,7 +60,7 @@ const createProject = async (req, res) => {
   }
 };
 
-const updateProject = async (req, res) => {
+const updateProject = async (/** @type {any} */ req, res) => {
   try {
     const project = await Project.findById(req.params.id);
     if (!project) return res.status(404).json({ message: 'Project not found.' });
@@ -79,7 +79,7 @@ const updateProject = async (req, res) => {
   }
 };
 
-const deleteProject = async (req, res) => {
+const deleteProject = async (/** @type {any} */ req, res) => {
   try {
     const project = await Project.findById(req.params.id);
     if (!project) return res.status(404).json({ message: 'Project not found.' });
@@ -96,7 +96,7 @@ const deleteProject = async (req, res) => {
   }
 };
 
-const toggleStar = async (req, res) => {
+const toggleStar = async (/** @type {any} */ req, res) => {
   try {
     const project = await Project.findById(req.params.id);
     if (!project) return res.status(404).json({ error: 'Project not found.' });
